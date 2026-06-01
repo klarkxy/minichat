@@ -8,6 +8,8 @@ import {
   Github,
   ShieldCheck,
   ChevronDown,
+  BookOpen,
+  ScrollText,
 } from 'lucide-react'
 import Button from '../components/Button'
 import { useStore } from '../store/StoreContext'
@@ -85,6 +87,28 @@ export default function WelcomeView() {
           <p className={s.subtitle}>
             基于 MiniMax 的角色扮演聊天工具 · 数据全部存在你本地浏览器
           </p>
+          <div className={s.docLinks}>
+            <a
+              href={REPO_URL + '#readme'}
+              target="_blank"
+              rel="noreferrer"
+              className={s.docLink}
+            >
+              <BookOpen size={13} />
+              README
+              <ExternalLink size={10} />
+            </a>
+            <a
+              href={REPO_URL + '/blob/main/LICENSE'}
+              target="_blank"
+              rel="noreferrer"
+              className={s.docLink}
+            >
+              <ScrollText size={13} />
+              SATA 2.0 License
+              <ExternalLink size={10} />
+            </a>
+          </div>
         </div>
 
         <div className={s.trustRow}>

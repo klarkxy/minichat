@@ -3,6 +3,20 @@
   "private": true,
   "version": "0.1.0",
   "type": "module",
+  "license": "SATA-2.0",
+  "homepage": "https://github.com/klarkxy/minichat#readme",
+  "description": "基于 MiniMax 的角色扮演聊天工具，纯前端、本地存储、可审计。",
+  "author": {
+    "name": "Klarkxy",
+    "email": "278370456@qq.com"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/klarkxy/minichat.git"
+  },
+  "bugs": {
+    "url": "https://github.com/klarkxy/minichat/issues"
+  },
   "scripts": {
     "dev": "vite",
     "build": "tsc -b && vite build",

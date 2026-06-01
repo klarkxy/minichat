@@ -284,7 +284,8 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
           type: 'update-message',
           chatId: chat.id,
           messageId: aiMsgId,
-          content: (accumRef.current[aiMsgId] ?? '') + '\n\n[已停止生成]',
+          content:
+            (accumRef.current[aiMsgId] ?? '') + '\n\n—— ⏹ 已手动停止 ——',
           patch: { streaming: false },
         })
       } else {
