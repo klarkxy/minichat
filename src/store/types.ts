@@ -18,16 +18,23 @@ export interface Sample {
   ai: string
 }
 
+/** 角色类型
+ * - 'character': AI 扮演的角色（注入到 system + samples）
+ * - 'user': 用户的"我是谁"人设（注入到 user_system） */
+export type CharacterRole = 'character' | 'user'
+
 export interface Character {
   id: string
   name: string
   avatar: string // emoji or URL
   systemPrompt: string
-  /** 教模型怎么说话：few-shot 范例，每条是一对 user/ai */
+  /** few-shot 范例，每条是一对 user/ai。character 类型才有意义 */
   samples: Sample[]
   /** 首次对话开场白（角色主动说的话） */
   greeting: string
   tags: string[]
+  /** 角色类型：默认 'character'（AI 角色）；'user' 表示"我自己" */
+  role: CharacterRole
   createdAt: number
   updatedAt: number
 }
@@ -47,7 +54,10 @@ export interface ChatMessage {
 
 export interface Chat {
   id: string
+  /** AI 角色 id（注入 system + samples） */
   characterId: string
+  /** 用户人设角色 id（注入 user_system），可选 */
+  userCharacterId?: string
   title: string
   scenario: string
   temperature: number

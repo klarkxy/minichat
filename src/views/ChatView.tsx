@@ -228,24 +228,14 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [chat.id])
 
+  /** 查找 user 角色（user_system prompt 来源） */
+  const userCharacter = chat.userCharacterId
+    ? state.characters.find((c) => c.id === chat.userCharacterId)
+    : null
+
   const buildSystemPrompt = (): string => {
-    const parts: string[] = []
-    if (character?.systemPrompt) parts.push(character.systemPrompt)
-    // 注入 few-shot 示例对话（教模型说话风格）
-    if (character?.samples?.length) {
-      const blocks = character.samples
-        .filter((s) => s.user.trim() && s.ai.trim())
-        .map((s) => `用户：${s.user}\n${character.name}：${s.ai}`)
-        .join('\n\n')
-      if (blocks) {
-        parts.push('【参考示例 — 模仿这些对话的语气和风格】\n' + blocks)
-      }
-    }
-    if (chat.scenario) {
-      parts.push('【当前场景】\n' + chat.scenario)
-    }
-    if (!parts.length) return '你是一个友好的对话伙伴。'
-    return parts.join('\n\n')
+    if (!character?.systemPrompt) return '你是一个友好的对话伙伴。'
+    return character.systemPrompt
   }
 
   const canSend = !!character && !streaming && draft.trim().length > 0
@@ -265,6 +255,9 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
           apiKey: settings.apiKey,
           model: CHAT_MODEL,
           systemPrompt: buildSystemPrompt(),
+          userSystemPrompt: userCharacter?.systemPrompt,
+          scenario: chat.scenario || undefined,
+          samples: character?.samples,
           history: chat.messages,
           userMessage: text,
           temperature: chat.temperature,

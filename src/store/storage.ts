@@ -46,14 +46,16 @@ export function saveSettings(s: Settings): void {
   write(KEYS.settings, s)
 }
 
-// characters: 迁移老数据（greeting 字符串 → samples 数组）
+// characters: 迁移老数据
 function migrateCharacter(raw: Character): Character {
-  // 兼容老字段：如果只有 greeting 没有 samples，把 greeting 转成一条 sample
-  const legacy = raw as Character & { samples?: Sample[] }
+  // 兼容老字段：如果只有 greeting 没有 samples，留空数组
+  const legacy = raw as Character & { samples?: Sample[]; role?: string }
   const samples = Array.isArray(legacy.samples) ? legacy.samples : []
   return {
     ...raw,
     samples,
+    // 老数据默认是 AI 角色
+    role: legacy.role === 'user' ? 'user' : 'character',
   }
 }
 

@@ -72,11 +72,24 @@ export default function CharactersView() {
       ) : (
         <div className={s.grid}>
           {characters.map((c) => (
-            <article key={c.id} className={s.card}>
+            <article
+              key={c.id}
+              className={[s.card, c.role === 'user' ? s.cardUser : ''].join(' ')}
+            >
               <header className={s.cardHead}>
                 <Avatar name={c.name} avatar={c.avatar} size={48} />
                 <div className={s.cardHeadText}>
-                  <h3 className={s.cardName}>{c.name}</h3>
+                  <div className={s.cardNameRow}>
+                    <h3 className={s.cardName}>{c.name}</h3>
+                    <span
+                      className={[
+                        s.roleTag,
+                        c.role === 'user' ? s.roleTagUser : s.roleTagAi,
+                      ].join(' ')}
+                    >
+                      {c.role === 'user' ? '我' : 'AI'}
+                    </span>
+                  </div>
                   {c.tags?.length ? (
                     <div className={s.tags}>
                       {c.tags.slice(0, 3).map((t) => (
@@ -89,7 +102,9 @@ export default function CharactersView() {
                 </div>
               </header>
               <p className={s.preview}>
-                {c.greeting || c.systemPrompt.slice(0, 80) || '（未填写人设）'}
+                {c.role === 'user'
+                  ? c.systemPrompt.slice(0, 80) || '（未填写人设）'
+                  : c.greeting || c.systemPrompt.slice(0, 80) || '（未填写人设）'}
               </p>
               <footer className={s.cardFoot}>
                 <Button
@@ -108,14 +123,16 @@ export default function CharactersView() {
                 >
                   删除
                 </Button>
-                <Button
-                  variant="primary"
-                  size="sm"
-                  onClick={() => startChat(c)}
-                  icon={<MessageCircle size={14} />}
-                >
-                  开始对话
-                </Button>
+                {c.role !== 'user' ? (
+                  <Button
+                    variant="primary"
+                    size="sm"
+                    onClick={() => startChat(c)}
+                    icon={<MessageCircle size={14} />}
+                  >
+                    开始对话
+                  </Button>
+                ) : null}
               </footer>
             </article>
           ))}

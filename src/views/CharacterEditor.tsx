@@ -8,7 +8,7 @@ import Avatar from '../components/Avatar'
 import { useStore } from '../store/StoreContext'
 import { chatOnce } from '../api/minimax'
 import { uid } from '../store/storage'
-import type { Character, Sample } from '../store/types'
+import type { Character, CharacterRole, Sample } from '../store/types'
 import s from './CharacterEditor.module.css'
 
 interface Props {
@@ -204,6 +204,7 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
   )
   const [greeting, setGreeting] = useState(character?.greeting ?? '')
   const [tagsText, setTagsText] = useState((character?.tags ?? []).join('、'))
+  const [role, setRole] = useState<CharacterRole>(character?.role ?? 'character')
 
   const [genDirection, setGenDirection] = useState('')
   const [generating, setGenerating] = useState(false)
@@ -289,9 +290,11 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
       name: name.trim(),
       avatar: avatar.trim(),
       systemPrompt: systemPrompt.trim(),
-      samples: cleanSamples,
-      greeting: greeting.trim(),
+      // user 类型不需要 samples 和 greeting
+      samples: role === 'user' ? [] : cleanSamples,
+      greeting: role === 'user' ? '' : greeting.trim(),
       tags,
+      role,
       createdAt: character?.createdAt ?? Date.now(),
       updatedAt: Date.now(),
     }
@@ -349,6 +352,32 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
             placeholder="古风、温柔、话少"
             hint="用逗号或顿号分隔。"
           />
+        </div>
+      </div>
+
+      <div className={s.roleBox}>
+        <label className={s.roleLabel}>类型</label>
+        <div className={s.roleSegment}>
+          <button
+            type="button"
+            className={[s.roleSeg, role === 'character' ? s.roleSegActive : ''].join(' ')}
+            onClick={() => setRole('character')}
+          >
+            <span className={s.roleSegTitle}>AI 角色</span>
+            <span className={s.roleSegDesc}>
+              由模型扮演。对话时作为 system + few-shot 范例
+            </span>
+          </button>
+          <button
+            type="button"
+            className={[s.roleSeg, role === 'user' ? s.roleSegActive : ''].join(' ')}
+            onClick={() => setRole('user')}
+          >
+            <span className={s.roleSegTitle}>我的人设</span>
+            <span className={s.roleSegDesc}>
+              代表你自己。对话时作为 user_system 注入
+            </span>
+          </button>
         </div>
       </div>
 
