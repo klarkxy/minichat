@@ -28,8 +28,16 @@ function write<T>(key: string, value: T): void {
 
 // settings
 export function loadSettings(): Settings {
-  const loaded = read<Partial<Settings>>(KEYS.settings, {})
-  return { ...DEFAULT_SETTINGS, ...loaded }
+  const loaded = read<Partial<Settings> & { model?: string }>(KEYS.settings, {})
+  // 迁移老的单 model 字段
+  const legacyModel = loaded.model
+  return {
+    ...DEFAULT_SETTINGS,
+    ...loaded,
+    chatModel: loaded.chatModel ?? legacyModel ?? DEFAULT_SETTINGS.chatModel,
+    generationModel:
+      loaded.generationModel ?? legacyModel ?? DEFAULT_SETTINGS.generationModel,
+  }
 }
 export function saveSettings(s: Settings): void {
   write(KEYS.settings, s)

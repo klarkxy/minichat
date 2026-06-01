@@ -19,7 +19,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
 
   const [endpoint, setEndpoint] = useState<Endpoint>(settings.endpoint)
   const [apiKey, setApiKey] = useState(settings.apiKey)
-  const [model, setModel] = useState(settings.model)
+  const [chatModel, setChatModel] = useState(settings.chatModel)
+  const [generationModel, setGenerationModel] = useState(settings.generationModel)
   const [temperature, setTemperature] = useState(settings.temperature)
   const [maxTokens, setMaxTokens] = useState(settings.maxTokens)
   const [showKey, setShowKey] = useState(false)
@@ -30,7 +31,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const isDirty =
     endpoint !== settings.endpoint ||
     apiKey !== settings.apiKey ||
-    model !== settings.model ||
+    chatModel !== settings.chatModel ||
+    generationModel !== settings.generationModel ||
     temperature !== settings.temperature ||
     maxTokens !== settings.maxTokens
 
@@ -41,7 +43,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
         ...settings,
         endpoint,
         apiKey,
-        model,
+        chatModel,
+        generationModel,
         temperature,
         maxTokens,
         configured: !!apiKey,
@@ -53,7 +56,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const onTest = async () => {
     setTesting(true)
     setTest(null)
-    const result = await testConnection(endpoint, apiKey, model)
+    // 测试联通用对话模型
+    const result = await testConnection(endpoint, apiKey, chatModel)
     setTest(result)
     setTesting(false)
   }
@@ -61,7 +65,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const resetForm = () => {
     setEndpoint(settings.endpoint)
     setApiKey(settings.apiKey)
-    setModel(settings.model)
+    setChatModel(settings.chatModel)
+    setGenerationModel(settings.generationModel)
     setTemperature(settings.temperature)
     setMaxTokens(settings.maxTokens)
     setTest(null)
@@ -78,7 +83,7 @@ export default function SettingsDrawer({ open, onClose }: Props) {
       open={open}
       onClose={onClose}
       title="设置"
-      width={460}
+      width={480}
       footer={
         <>
           <Button variant="ghost" onClick={resetForm} disabled={!isDirty || testing}>
@@ -112,7 +117,6 @@ export default function SettingsDrawer({ open, onClose }: Props) {
               className={[s.seg, endpoint === 'cn' ? s.segActive : ''].join(' ')}
               onClick={() => {
                 setEndpoint('cn')
-                setModel('M2-her')
                 setTest(null)
               }}
             >
@@ -120,7 +124,7 @@ export default function SettingsDrawer({ open, onClose }: Props) {
             </button>
           </div>
           <p className={s.hint}>
-            国际版默认使用 MiniMax-M3；国内版默认使用 M2-her，专为对话场景优化。
+            国际版推荐使用 MiniMax-M3；国内版推荐使用 M2-her（专为对话场景优化）。
           </p>
         </div>
 
@@ -153,16 +157,26 @@ export default function SettingsDrawer({ open, onClose }: Props) {
           </p>
         </div>
 
-        <div className={s.field}>
+        <div className={s.modelGroup}>
           <Input
-            label="模型名称"
-            value={model}
+            label="对话模型（跑角色聊天）"
+            value={chatModel}
             onChange={(e) => {
-              setModel(e.target.value)
+              setChatModel(e.target.value)
               setTest(null)
             }}
-            placeholder={endpoint === 'global' ? 'MiniMax-M3' : 'M2-her'}
-            hint="可填入其他可用模型名称。"
+            placeholder="M2-her"
+            hint="默认 M2-her。角色对话会使用这个模型。"
+          />
+          <Input
+            label="生成模型（AI 写人设、示例）"
+            value={generationModel}
+            onChange={(e) => {
+              setGenerationModel(e.target.value)
+              setTest(null)
+            }}
+            placeholder="MiniMax-M3"
+            hint="默认 MiniMax-M3。生成类任务使用这个模型。"
           />
         </div>
 
@@ -202,9 +216,9 @@ export default function SettingsDrawer({ open, onClose }: Props) {
             variant="secondary"
             onClick={onTest}
             loading={testing}
-            disabled={!apiKey || !model}
+            disabled={!apiKey || !chatModel}
           >
-            测试连接
+            测试连接（{chatModel || '对话模型'}）
           </Button>
           {test ? (
             <div className={[s.testResult, test.ok ? s.testOk : s.testFail].join(' ')}>

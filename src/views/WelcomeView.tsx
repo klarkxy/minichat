@@ -2,7 +2,6 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { AlertTriangle, KeyRound, ExternalLink, ArrowRight } from 'lucide-react'
 import Button from '../components/Button'
-import Input from '../components/Input'
 import { useStore } from '../store/StoreContext'
 import { testConnection, type TestResult } from '../api/minimax'
 import type { Endpoint } from '../store/types'
@@ -14,7 +13,6 @@ export default function WelcomeView() {
 
   const [endpoint, setEndpoint] = useState<Endpoint>(state.settings.endpoint)
   const [apiKey, setApiKey] = useState(state.settings.apiKey)
-  const [model, setModel] = useState(state.settings.model)
   const [showKey, setShowKey] = useState(false)
   const [testing, setTesting] = useState(false)
   const [test, setTest] = useState<TestResult | null>(null)
@@ -28,7 +26,12 @@ export default function WelcomeView() {
     setError(null)
     setTesting(true)
     setTest(null)
-    const result = await testConnection(endpoint, apiKey, model)
+    // 测试联通用对话模型（最常见用途）
+    const result = await testConnection(
+      endpoint,
+      apiKey,
+      state.settings.chatModel,
+    )
     setTest(result)
     setTesting(false)
   }
@@ -44,7 +47,6 @@ export default function WelcomeView() {
         ...state.settings,
         endpoint,
         apiKey,
-        model,
         configured: true,
       },
     })
@@ -60,7 +62,7 @@ export default function WelcomeView() {
           </div>
           <h1 className={s.title}>minichat</h1>
           <p className={s.subtitle}>
-            基于 MiniMax M3 的角色扮演聊天工具 · 数据全部存在你本地浏览器
+            基于 MiniMax 的角色扮演聊天工具 · 数据全部存在你本地浏览器
           </p>
         </div>
 
@@ -101,6 +103,25 @@ export default function WelcomeView() {
           </div>
         </div>
 
+        <div className={s.modelNote}>
+          <div className={s.modelNoteTitle}>默认模型</div>
+          <ul className={s.modelList}>
+            <li>
+              <span className={s.modelTag}>对话</span>
+              <code className={s.modelName}>M2-her</code>
+              <span className={s.modelDesc}>—— 角色扮演和聊天</span>
+            </li>
+            <li>
+              <span className={[s.modelTag, s.modelTagGen].join(' ')}>生成</span>
+              <code className={s.modelName}>MiniMax-M3</code>
+              <span className={s.modelDesc}>—— AI 写人设、生成示例对话</span>
+            </li>
+          </ul>
+          <p className={s.modelHint}>
+            不用选，开箱即用。如果需要可在右上角齿轮里修改。
+          </p>
+        </div>
+
         <div className={s.form}>
           <div className={s.section}>
             <h3 className={s.sectionTitle}>1. 选择 Endpoint</h3>
@@ -110,24 +131,22 @@ export default function WelcomeView() {
                 className={[s.seg, endpoint === 'global' ? s.segActive : ''].join(' ')}
                 onClick={() => {
                   setEndpoint('global')
-                  setModel('MiniMax-M3')
                   setTest(null)
                 }}
               >
                 国际版
-                <span className={s.segHint}>minimax.io · M3</span>
+                <span className={s.segHint}>minimax.io</span>
               </button>
               <button
                 type="button"
                 className={[s.seg, endpoint === 'cn' ? s.segActive : ''].join(' ')}
                 onClick={() => {
                   setEndpoint('cn')
-                  setModel('M2-her')
                   setTest(null)
                 }}
               >
                 国内版
-                <span className={s.segHint}>minimaxi.com · M2-her</span>
+                <span className={s.segHint}>minimaxi.com</span>
               </button>
             </div>
           </div>
@@ -176,26 +195,13 @@ export default function WelcomeView() {
           </div>
 
           <div className={s.section}>
-            <h3 className={s.sectionTitle}>3. 模型名称（可改）</h3>
-            <Input
-              value={model}
-              onChange={(e) => {
-                setModel(e.target.value)
-                setTest(null)
-              }}
-              placeholder={endpoint === 'global' ? 'MiniMax-M3' : 'M2-her'}
-              hint="留空将使用默认值。"
-            />
-          </div>
-
-          <div className={s.section}>
-            <h3 className={s.sectionTitle}>4. 测试联通</h3>
+            <h3 className={s.sectionTitle}>3. 测试联通</h3>
             <div className={s.testRow}>
               <Button
                 variant="secondary"
                 onClick={onTest}
                 loading={testing}
-                disabled={!apiKey || !model}
+                disabled={!apiKey}
               >
                 发送一次测试请求
               </Button>

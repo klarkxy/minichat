@@ -99,7 +99,7 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
       const text = await chatOnce({
         endpoint: settings.endpoint,
         apiKey: settings.apiKey,
-        model: settings.model,
+        model: settings.generationModel,
         systemPrompt:
           '你是中文角色设定专家，输出简洁、结构清晰、可直接用作 system prompt 的中文文本。',
         history: [],
@@ -131,7 +131,7 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
       const text = await chatOnce({
         endpoint: settings.endpoint,
         apiKey: settings.apiKey,
-        model: settings.model,
+        model: settings.generationModel,
         systemPrompt: systemPrompt,
         history: [],
         userMessage: SAMPLE_PROMPT(systemPrompt),

@@ -252,7 +252,7 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
         {
           endpoint: settings.endpoint,
           apiKey: settings.apiKey,
-          model: settings.model,
+          model: settings.chatModel,
           systemPrompt: buildSystemPrompt(),
           history: chat.messages,
           userMessage: text,
@@ -462,8 +462,8 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
             <span className={s.paramVal}>{chat.temperature.toFixed(2)}</span>
           </div>
           <div className={s.paramItem}>
-            <span className={s.paramLabel}>模型</span>
-            <span className={s.paramVal}>{settings.model}</span>
+            <span className={s.paramLabel}>对话模型</span>
+            <span className={s.paramVal}>{settings.chatModel}</span>
           </div>
           <div className={s.paramItem}>
             <span className={s.paramLabel}>消息数</span>
