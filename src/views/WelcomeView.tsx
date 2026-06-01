@@ -1,11 +1,21 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { AlertTriangle, KeyRound, ExternalLink, ArrowRight } from 'lucide-react'
+import {
+  AlertTriangle,
+  KeyRound,
+  ExternalLink,
+  ArrowRight,
+  Github,
+  ShieldCheck,
+  ChevronDown,
+} from 'lucide-react'
 import Button from '../components/Button'
 import { useStore } from '../store/StoreContext'
 import { testConnection, type TestResult } from '../api/minimax'
 import type { Endpoint } from '../store/types'
 import s from './WelcomeView.module.css'
+
+const REPO_URL = 'https://github.com/klarkxy/minichat'
 
 export default function WelcomeView() {
   const { state, dispatch } = useStore()
@@ -57,6 +67,17 @@ export default function WelcomeView() {
     <div className={s.page}>
       <div className={s.card}>
         <div className={s.head}>
+          <a
+            href={REPO_URL}
+            target="_blank"
+            rel="noreferrer"
+            className={s.repoBadge}
+            title="在 GitHub 查看完整源码"
+          >
+            <Github size={14} />
+            <span>开源 · klarkxy/minichat</span>
+            <ExternalLink size={11} />
+          </a>
           <div className={s.logo}>
             <span>💬</span>
           </div>
@@ -64,6 +85,18 @@ export default function WelcomeView() {
           <p className={s.subtitle}>
             基于 MiniMax 的角色扮演聊天工具 · 数据全部存在你本地浏览器
           </p>
+        </div>
+
+        <div className={s.trustRow}>
+          <ShieldCheck size={14} className={s.trustIcon} />
+          <span>
+            所有代码已开源在
+            <a href={REPO_URL} target="_blank" rel="noreferrer" className={s.link}>
+              GitHub
+              <ExternalLink size={11} />
+            </a>
+            ，可随时审查。
+          </span>
         </div>
 
         <div className={s.warning}>
@@ -102,6 +135,55 @@ export default function WelcomeView() {
             </p>
           </div>
         </div>
+
+        <details className={s.auditDetails}>
+          <summary className={s.auditSummary}>
+            <ChevronDown size={14} className={s.auditChevron} />
+            <span>想自己审计代码？点这里</span>
+          </summary>
+          <div className={s.auditBody}>
+            <ol className={s.auditList}>
+              <li>
+                <strong>看仓库</strong>：
+                <a href={REPO_URL} target="_blank" rel="noreferrer" className={s.link}>
+                  {REPO_URL}
+                  <ExternalLink size={11} />
+                </a>
+                <span className={s.auditHint}>—— 全部源码 + Actions 部署日志都可看</span>
+              </li>
+              <li>
+                <strong>确认 API Key 不外发</strong>：在源码里搜
+                <code className={s.code}>apiKey</code>
+                可以看到它只出现在
+                <code className={s.code}>Authorization: Bearer ...</code>
+                头里，唯一请求目标是
+                <code className={s.code}>api.minimax.io</code>
+                或
+                <code className={s.code}>api.minimaxi.com</code>
+                <span className={s.auditHint}>（grep 验证，没有任何其他 fetch）</span>
+              </li>
+              <li>
+                <strong>确认部署方式</strong>：本站由 GitHub Pages 托管，
+                部署日志在
+                <a
+                  href={REPO_URL + '/actions'}
+                  target="_blank"
+                  rel="noreferrer"
+                  className={s.link}
+                >
+                  Actions 页面
+                  <ExternalLink size={11} />
+                </a>
+                <span className={s.auditHint}>（build 流程完全透明）</span>
+              </li>
+              <li>
+                <strong>确认无后端</strong>：本站是纯静态页面，所有状态都在你浏览器的
+                <code className={s.code}>localStorage</code>
+                里。换电脑 = 全新状态，没有任何云端同步。
+              </li>
+            </ol>
+          </div>
+        </details>
 
         <div className={s.modelNote}>
           <div className={s.modelNoteTitle}>默认模型</div>
