@@ -1,0 +1,24 @@
+.base {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  flex-shrink: 0;
+  user-select: none;
+  overflow: hidden;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.emoji {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+}
+
+.initial {
+  /* color set via inline style */
+}
+
+.img {
+  object-fit: cover;
+}
