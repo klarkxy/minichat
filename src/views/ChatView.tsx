@@ -230,6 +230,16 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
   const buildSystemPrompt = (): string => {
     const parts: string[] = []
     if (character?.systemPrompt) parts.push(character.systemPrompt)
+    // 注入 few-shot 示例对话（教模型说话风格）
+    if (character?.samples?.length) {
+      const blocks = character.samples
+        .filter((s) => s.user.trim() && s.ai.trim())
+        .map((s) => `用户：${s.user}\n${character.name}：${s.ai}`)
+        .join('\n\n')
+      if (blocks) {
+        parts.push('【参考示例 — 模仿这些对话的语气和风格】\n' + blocks)
+      }
+    }
     if (chat.scenario) {
       parts.push('【当前场景】\n' + chat.scenario)
     }

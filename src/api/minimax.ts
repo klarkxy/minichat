@@ -43,13 +43,15 @@ function buildRequestBody(req: ApiChatRequest, stream: boolean) {
     })),
     { role: 'user', content: req.userMessage },
   ]
+  // thinking 字段：M3 支持，M2-her 忽略；显式禁用 thinking 避免模型把推理过程输出到 content
   return {
     model: req.model,
     messages,
     temperature: req.temperature,
     max_completion_tokens: req.maxTokens,
     stream,
-  }
+    thinking: { type: 'disabled' },
+  } as Record<string, unknown>
 }
 
 async function parseError(res: Response): Promise<ApiError> {

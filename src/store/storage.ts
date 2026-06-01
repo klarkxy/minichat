@@ -1,4 +1,4 @@
-import type { Character, Chat, Settings } from './types'
+import type { Character, Chat, Settings, Sample } from './types'
 import { DEFAULT_SETTINGS } from './types'
 
 const KEYS = {
@@ -43,9 +43,20 @@ export function saveSettings(s: Settings): void {
   write(KEYS.settings, s)
 }
 
+// characters: 迁移老数据（greeting 字符串 → samples 数组）
+function migrateCharacter(raw: Character): Character {
+  // 兼容老字段：如果只有 greeting 没有 samples，把 greeting 转成一条 sample
+  const legacy = raw as Character & { samples?: Sample[] }
+  const samples = Array.isArray(legacy.samples) ? legacy.samples : []
+  return {
+    ...raw,
+    samples,
+  }
+}
+
 // characters
 export function loadCharacters(): Character[] {
-  return read<Character[]>(KEYS.characters, [])
+  return read<Character[]>(KEYS.characters, []).map(migrateCharacter)
 }
 export function saveCharacters(list: Character[]): void {
   write(KEYS.characters, list)

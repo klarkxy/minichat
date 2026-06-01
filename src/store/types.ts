@@ -12,11 +12,19 @@ export interface Settings {
   configured: boolean
 }
 
+export interface Sample {
+  user: string
+  ai: string
+}
+
 export interface Character {
   id: string
   name: string
   avatar: string // emoji or URL
   systemPrompt: string
+  /** 教模型怎么说话：few-shot 范例，每条是一对 user/ai */
+  samples: Sample[]
+  /** 首次对话开场白（角色主动说的话） */
   greeting: string
   tags: string[]
   createdAt: number
