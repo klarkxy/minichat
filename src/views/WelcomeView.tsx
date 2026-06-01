@@ -15,6 +15,7 @@ import Button from '../components/Button'
 import { useStore } from '../store/StoreContext'
 import { testConnection, type TestResult } from '../api/minimax'
 import type { Endpoint } from '../store/types'
+import { CHAT_MODEL } from '../store/types'
 import s from './WelcomeView.module.css'
 
 const REPO_URL = 'https://github.com/klarkxy/minichat'
@@ -39,11 +40,7 @@ export default function WelcomeView() {
     setTesting(true)
     setTest(null)
     // 测试联通用对话模型（最常见用途）
-    const result = await testConnection(
-      endpoint,
-      apiKey,
-      state.settings.chatModel,
-    )
+    const result = await testConnection(endpoint, apiKey, CHAT_MODEL)
     setTest(result)
     setTesting(false)
   }

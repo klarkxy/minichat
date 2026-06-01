@@ -19,6 +19,7 @@ import { useStore } from '../store/StoreContext'
 import { chatStream } from '../api/minimax'
 import { uid } from '../store/storage'
 import type { Chat, ChatMessage } from '../store/types'
+import { CHAT_MODEL } from '../store/types'
 import s from './ChatView.module.css'
 
 function fmtTime(ts: number): string {
@@ -262,7 +263,7 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
         {
           endpoint: settings.endpoint,
           apiKey: settings.apiKey,
-          model: settings.chatModel,
+          model: CHAT_MODEL,
           systemPrompt: buildSystemPrompt(),
           history: chat.messages,
           userMessage: text,
@@ -471,10 +472,6 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
               className={s.paramSlider}
             />
             <span className={s.paramVal}>{chat.temperature.toFixed(2)}</span>
-          </div>
-          <div className={s.paramItem}>
-            <span className={s.paramLabel}>对话模型</span>
-            <span className={s.paramVal}>{settings.chatModel}</span>
           </div>
           <div className={s.paramItem}>
             <span className={s.paramLabel}>消息数</span>

@@ -5,6 +5,7 @@ import Button from './Button'
 import Input from './Input'
 import { useStore } from '../store/StoreContext'
 import { testConnection, type TestResult } from '../api/minimax'
+import { CHAT_MODEL } from '../store/types'
 import type { Endpoint } from '../store/types'
 import s from './SettingsDrawer.module.css'
 
@@ -19,7 +20,6 @@ export default function SettingsDrawer({ open, onClose }: Props) {
 
   const [endpoint, setEndpoint] = useState<Endpoint>(settings.endpoint)
   const [apiKey, setApiKey] = useState(settings.apiKey)
-  const [chatModel, setChatModel] = useState(settings.chatModel)
   const [generationModel, setGenerationModel] = useState(settings.generationModel)
   const [temperature, setTemperature] = useState(settings.temperature)
   const [maxTokens, setMaxTokens] = useState(settings.maxTokens)
@@ -31,7 +31,6 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const isDirty =
     endpoint !== settings.endpoint ||
     apiKey !== settings.apiKey ||
-    chatModel !== settings.chatModel ||
     generationModel !== settings.generationModel ||
     temperature !== settings.temperature ||
     maxTokens !== settings.maxTokens
@@ -43,7 +42,6 @@ export default function SettingsDrawer({ open, onClose }: Props) {
         ...settings,
         endpoint,
         apiKey,
-        chatModel,
         generationModel,
         temperature,
         maxTokens,
@@ -56,8 +54,8 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const onTest = async () => {
     setTesting(true)
     setTest(null)
-    // 测试联通用对话模型
-    const result = await testConnection(endpoint, apiKey, chatModel)
+    // 测试联通用对话模型（固定 H2-her）
+    const result = await testConnection(endpoint, apiKey, CHAT_MODEL)
     setTest(result)
     setTesting(false)
   }
@@ -65,7 +63,6 @@ export default function SettingsDrawer({ open, onClose }: Props) {
   const resetForm = () => {
     setEndpoint(settings.endpoint)
     setApiKey(settings.apiKey)
-    setChatModel(settings.chatModel)
     setGenerationModel(settings.generationModel)
     setTemperature(settings.temperature)
     setMaxTokens(settings.maxTokens)
@@ -157,19 +154,14 @@ export default function SettingsDrawer({ open, onClose }: Props) {
           </p>
         </div>
 
-        <div className={s.modelGroup}>
+        <div className={s.fixedModelBox}>
+          <div className={s.fixedModelRow}>
+            <span className={s.fixedModelLabel}>对话模型</span>
+            <code className={s.fixedModelValue}>{CHAT_MODEL}</code>
+            <span className={s.fixedModelTag}>固定</span>
+          </div>
           <Input
-            label="对话模型（跑角色聊天）"
-            value={chatModel}
-            onChange={(e) => {
-              setChatModel(e.target.value)
-              setTest(null)
-            }}
-            placeholder="M2-her"
-            hint="默认 M2-her。角色对话会使用这个模型。"
-          />
-          <Input
-            label="生成模型（AI 写人设、示例）"
+            label="生成模型（AI 写人设、写示例）"
             value={generationModel}
             onChange={(e) => {
               setGenerationModel(e.target.value)
@@ -216,9 +208,9 @@ export default function SettingsDrawer({ open, onClose }: Props) {
             variant="secondary"
             onClick={onTest}
             loading={testing}
-            disabled={!apiKey || !chatModel}
+            disabled={!apiKey}
           >
-            测试连接（{chatModel || '对话模型'}）
+            测试连接（{CHAT_MODEL}）
           </Button>
           {test ? (
             <div className={[s.testResult, test.ok ? s.testOk : s.testFail].join(' ')}>

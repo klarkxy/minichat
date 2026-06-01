@@ -5,6 +5,87 @@ const ENDPOINTS: Record<Endpoint, string> = {
   cn: 'https://api.minimaxi.com/v1',
 }
 
+/**
+ * 过滤模型输出的 <think>...</think> 块（H2-her 会把思考过程放进 content）。
+ * 流式和一次性都可用。
+ */
+export function stripThink(s: string): string {
+  return s.replace(/<think>[\s\S]*?<\/think>/gi, '').trim()
+}
+
+/**
+ * 流式 think 块过滤器：处理跨 chunk 边界的不完整标签。
+ * 用法：new ThinkFilter(); filter(delta) -> string
+ */
+class ThinkFilter {
+  private buf = ''
+  private inThink = false
+
+  /** 输入一段新 delta，输出可以安全推给 UI 的文本（可能为空） */
+  push(delta: string): string {
+    this.buf += delta
+    let out = ''
+    // 循环处理缓冲区，处理可能存在的多个 think 块
+    while (true) {
+      if (this.inThink) {
+        const endIdx = this.buf.indexOf('</think>')
+        if (endIdx === -1) {
+          // 还在 think 块里，没遇到结束标签
+          // 但如果缓冲区里有半个 </think> 标签（<、</、</t、</th...），需要保留
+          const partialMatch = this.buf.match(/<\/?t?h?i?n?k?>?$/i)
+          if (partialMatch) {
+            // 把可能是不完整标签的部分保留，丢掉之前的
+            this.buf = partialMatch[0]
+          } else {
+            this.buf = ''
+          }
+          return out
+        }
+        // 找到结束标签，跳过它和它之前的全部
+        this.buf = this.buf.slice(endIdx + '</think>'.length)
+        this.inThink = false
+      } else {
+        const startIdx = this.buf.indexOf('<think>')
+        if (startIdx === -1) {
+          // 没有起始标签，但可能有半个 <think> 跨边界
+          const partialMatch = this.buf.match(/<t?h?i?n?k?>?$/i)
+          if (partialMatch && this.buf.length - partialMatch[0].length === 0) {
+            // 整个缓冲区都是可能的不完整标签，保留
+          } else if (partialMatch) {
+            out += this.buf.slice(0, this.buf.length - partialMatch[0].length)
+            this.buf = partialMatch[0]
+          } else {
+            out += this.buf
+            this.buf = ''
+          }
+          return out
+        }
+        // 找到起始标签
+        out += this.buf.slice(0, startIdx)
+        this.buf = this.buf.slice(startIdx + '<think>'.length)
+        this.inThink = true
+      }
+    }
+  }
+
+  /** 流结束时调用，处理残留缓冲区（不完整的 think 块） */
+  flush(): string {
+    // 如果还在 think 块里，丢弃全部
+    if (this.inThink) {
+      this.buf = ''
+      return ''
+    }
+    // 否则输出剩余（不完整标签直接丢弃）
+    const partialMatch = this.buf.match(/<t?h?i?n?k?>?$/i)
+    if (partialMatch && this.buf.length > partialMatch[0].length) {
+      const out = this.buf.slice(0, this.buf.length - partialMatch[0].length)
+      this.buf = ''
+      return out
+    }
+    return ''
+  }
+}
+
 export interface ApiChatRequest {
   endpoint: Endpoint
   apiKey: string
@@ -87,7 +168,8 @@ export async function chatOnce(req: ApiChatRequest): Promise<string> {
   })
   if (!res.ok) throw await parseError(res)
   const data = await res.json()
-  return data?.choices?.[0]?.message?.content ?? ''
+  const content: string = data?.choices?.[0]?.message?.content ?? ''
+  return stripThink(content)
 }
 
 /** streaming chat completion, returns the full content when done */
@@ -112,6 +194,7 @@ export async function chatStream(
   const decoder = new TextDecoder('utf-8')
   let buffer = ''
   let full = ''
+  const thinkFilter = new ThinkFilter()
 
   const DONE = '[DONE]'
 
@@ -134,8 +217,11 @@ export async function chatStream(
           const json = JSON.parse(payload)
           const delta = json?.choices?.[0]?.delta?.content
           if (typeof delta === 'string' && delta.length > 0) {
+            // 累计 full 用原始 delta（保留内部状态）
             full += delta
-            onDelta(delta)
+            // 推给 UI 的是过滤掉 think 块后的内容
+            const clean = thinkFilter.push(delta)
+            if (clean) onDelta(clean)
           }
         } catch (err) {
           console.warn('SSE parse error', err, payload)
@@ -143,6 +229,10 @@ export async function chatStream(
       }
     }
   }
+
+  // 流结束，flush 残留
+  const tail = thinkFilter.flush()
+  if (tail) onDelta(tail)
 
   return full
 }

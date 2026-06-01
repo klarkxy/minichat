@@ -28,13 +28,16 @@ function write<T>(key: string, value: T): void {
 
 // settings
 export function loadSettings(): Settings {
-  const loaded = read<Partial<Settings> & { model?: string }>(KEYS.settings, {})
-  // 迁移老的单 model 字段
+  const loaded = read<Partial<Settings> & { model?: string; chatModel?: string }>(
+    KEYS.settings,
+    {},
+  )
+  // 兼容老数据：把老的 model 字段映射到 generationModel
+  // chatModel 字段已废弃（现在用 CHAT_MODEL 常量），迁移时直接忽略
   const legacyModel = loaded.model
   return {
     ...DEFAULT_SETTINGS,
     ...loaded,
-    chatModel: loaded.chatModel ?? legacyModel ?? DEFAULT_SETTINGS.chatModel,
     generationModel:
       loaded.generationModel ?? legacyModel ?? DEFAULT_SETTINGS.generationModel,
   }

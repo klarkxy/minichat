@@ -3,14 +3,15 @@ export type Endpoint = 'global' | 'cn'
 export interface Settings {
   endpoint: Endpoint
   apiKey: string
-  /** 模型用于角色对话（chatStream / chatOnce） */
-  chatModel: string
-  /** 模型用于 AI 生成人设、AI 生成示例 */
+  /** 模型用于 AI 生成人设、AI 生成示例（用户可改） */
   generationModel: string
   temperature: number
   maxTokens: number
   configured: boolean
 }
+
+/** 对话模型：固定 M2-her，运行时不可改 */
+export const CHAT_MODEL = 'M2-her'
 
 export interface Sample {
   user: string
@@ -58,7 +59,6 @@ export interface Chat {
 export const DEFAULT_SETTINGS: Settings = {
   endpoint: 'global',
   apiKey: '',
-  chatModel: 'M2-her',
   generationModel: 'MiniMax-M3',
   temperature: 0.8,
   maxTokens: 2048,
