@@ -127,49 +127,31 @@ function buildRequestBody(req: ApiChatRequest, stream: boolean) {
     (s) => s.user.trim() && s.ai.trim(),
   )
 
-  let messages: RawMessage[]
+  // ⚠️ M2-her 服务端 bug：user_system / group / sample_message_* 等高级角色
+  // 都会 100% 触发 999 (1000) 错误。已实测确认。
+  // 全部降级到 OpenAI 兼容格式，把高级字段拼到 system prompt 文本里。
 
-  // 高级角色：cn 端点（M2-her）支持 user_system / group / sample_message_*
-  if (req.endpoint === 'cn') {
-    messages = [{ role: 'system', content: req.systemPrompt }]
-    if (req.userSystemPrompt?.trim()) {
-      messages.push({ role: 'user_system', content: req.userSystemPrompt.trim() })
-    }
-    if (req.scenario?.trim()) {
-      messages.push({ role: 'group', content: req.scenario.trim() })
-    }
-    // 3 对样本：交错 sample_message_user / sample_message_ai
-    for (const s of validSamples) {
-      messages.push({ role: 'sample_message_user', content: s.user.trim() })
-      messages.push({ role: 'sample_message_ai', content: s.ai.trim() })
-    }
-    messages.push(
-      ...req.history.map((m) => ({ role: m.role, content: m.content })),
-      { role: 'user', content: req.userMessage },
-    )
-  } else {
-    // 国际端（OpenAI 兼容）：不支持高级角色，降级拼到 system prompt
-    let fullSystem = req.systemPrompt
-    if (req.userSystemPrompt?.trim()) {
-      fullSystem += '\n\n【用户身份】\n' + req.userSystemPrompt.trim()
-    }
-    if (req.scenario?.trim()) {
-      fullSystem += '\n\n【当前场景】\n' + req.scenario.trim()
-    }
-    if (validSamples.length) {
-      const blocks = validSamples
-        .map((s) => `用户：${s.user.trim()}\nAI：${s.ai.trim()}`)
-        .join('\n\n')
-      fullSystem += '\n\n【参考示例 — 模仿这些对话的语气和风格】\n' + blocks
-    }
-    messages = [
-      { role: 'system', content: fullSystem },
-      ...req.history.map((m) => ({ role: m.role, content: m.content })),
-      { role: 'user', content: req.userMessage },
-    ]
+  const systemBlocks: string[] = [req.systemPrompt]
+  if (req.userSystemPrompt?.trim()) {
+    systemBlocks.push('【用户身份】\n' + req.userSystemPrompt.trim())
   }
+  if (req.scenario?.trim()) {
+    systemBlocks.push('【当前场景】\n' + req.scenario.trim())
+  }
+  if (validSamples.length) {
+    const blocks = validSamples
+      .map((s) => `用户：${s.user.trim()}\nAI：${s.ai.trim()}`)
+      .join('\n\n')
+    systemBlocks.push('【参考示例 — 模仿这些对话的语气和风格】\n' + blocks)
+  }
+  const fullSystem = systemBlocks.join('\n\n')
 
-  // thinking 字段：M3 支持，M2-her 忽略；显式禁用 thinking 避免模型把推理过程输出到 content
+  const messages: RawMessage[] = [
+    { role: 'system', content: fullSystem },
+    ...req.history.map((m) => ({ role: m.role, content: m.content })),
+    { role: 'user', content: req.userMessage },
+  ]
+
   return {
     model: req.model,
     messages,
