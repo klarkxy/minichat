@@ -127,10 +127,37 @@ function buildRequestBody(req: ApiChatRequest, stream: boolean) {
     (s) => s.user.trim() && s.ai.trim(),
   )
 
-  // ⚠️ M2-her 服务端 bug：user_system / group / sample_message_* 等高级角色
-  // 都会 100% 触发 999 (1000) 错误。已实测确认。
-  // 全部降级到 OpenAI 兼容格式，把高级字段拼到 system prompt 文本里。
+  // 高级角色：cn 端点（M2-her）支持 user_system / group / sample_message_*
+  // ⚠️ 实测：M2-her 服务端在收到这些角色时 100% 返回 999 (1000) 错误
+  // （虽然官方文档说支持）。详见 README 的"已知问题"小节。
+  if (req.endpoint === 'cn') {
+    const messages: RawMessage[] = [{ role: 'system', content: req.systemPrompt }]
+    if (req.userSystemPrompt?.trim()) {
+      messages.push({ role: 'user_system', content: req.userSystemPrompt.trim() })
+    }
+    if (req.scenario?.trim()) {
+      messages.push({ role: 'group', content: req.scenario.trim() })
+    }
+    // 3 对样本：交错 sample_message_user / sample_message_ai
+    for (const s of validSamples) {
+      messages.push({ role: 'sample_message_user', content: s.user.trim() })
+      messages.push({ role: 'sample_message_ai', content: s.ai.trim() })
+    }
+    messages.push(
+      ...req.history.map((m) => ({ role: m.role, content: m.content })),
+      { role: 'user', content: req.userMessage },
+    )
+    return {
+      model: req.model,
+      messages,
+      temperature: req.temperature,
+      max_completion_tokens: req.maxTokens,
+      stream,
+      thinking: { type: 'disabled' },
+    } as Record<string, unknown>
+  }
 
+  // 国际端（OpenAI 兼容）：不支持高级角色，拼到 system prompt
   const systemBlocks: string[] = [req.systemPrompt]
   if (req.userSystemPrompt?.trim()) {
     systemBlocks.push('【用户身份】\n' + req.userSystemPrompt.trim())
