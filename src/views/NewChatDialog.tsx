@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import Modal from '../components/Modal'
 import Button from '../components/Button'
 import Textarea from '../components/Textarea'
@@ -20,21 +20,12 @@ interface Props {
 export default function NewChatDialog({ open, onClose, defaultCharacterId }: Props) {
   const { state, dispatch } = useStore()
   const nav = useNavigate()
-
   const characters = state.characters
-  const aiCharacters = useMemo(
-    () => characters.filter((c) => c.role !== 'user'),
-    [characters],
-  )
-  const userCharacters = useMemo(
-    () => characters.filter((c) => c.role === 'user'),
-    [characters],
-  )
 
-  const [selectedAiId, setSelectedAiId] = useState<string | null>(
-    defaultCharacterId ?? aiCharacters[0]?.id ?? null,
+  const [selectedSystemId, setSelectedSystemId] = useState<string | null>(
+    defaultCharacterId ?? characters[0]?.id ?? null,
   )
-  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedUserSystemId, setSelectedUserSystemId] = useState<string | null>(null)
   const [scenario, setScenario] = useState('')
   const [temperature, setTemperature] = useState(state.settings.temperature)
 
@@ -50,27 +41,15 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
     )
   }
 
-  if (aiCharacters.length === 0) {
-    return (
-      <Modal open={open} onClose={onClose} title="新建对话" width={460}>
-        <EmptyState
-          icon={<UserRound size={24} />}
-          title="还没有 AI 角色"
-          description="需要至少一个 AI 角色才能开聊。建一个吧。"
-        />
-      </Modal>
-    )
-  }
-
   const start = () => {
-    if (!selectedAiId) return
-    const aiCh = state.characters.find((c) => c.id === selectedAiId)
-    if (!aiCh) return
+    if (!selectedSystemId) return
+    const sysCh = state.characters.find((c) => c.id === selectedSystemId)
+    if (!sysCh) return
     const newChat = {
       id: uid(),
-      characterId: aiCh.id,
-      userCharacterId: selectedUserId ?? undefined,
-      title: scenario.trim() || `与 ${aiCh.name} 的对话`,
+      characterId: sysCh.id,
+      userCharacterId: selectedUserSystemId ?? undefined,
+      title: scenario.trim() || `与 ${sysCh.name} 的对话`,
       scenario: scenario.trim(),
       temperature,
       messages: [],
@@ -87,7 +66,7 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
       open={open}
       onClose={onClose}
       title="新建对话"
-      width={680}
+      width={720}
       footer={
         <>
           <Button variant="ghost" onClick={onClose}>
@@ -96,7 +75,7 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
           <Button
             variant="primary"
             onClick={start}
-            disabled={!selectedAiId}
+            disabled={!selectedSystemId}
             iconRight={<ArrowRight size={14} />}
           >
             开始对话
@@ -107,16 +86,17 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
       <div className={s.dualPane}>
         <div className={s.pane}>
           <h3 className={s.h3}>
-            AI 角色
-            <span className={s.h3Hint}>必选 · 由模型扮演</span>
+            和 ta 聊
+            <span className={s.h3Hint}>必选 · 作为 system</span>
           </h3>
           <div className={s.charList}>
-            {aiCharacters.map((c) => (
+            {characters.map((c) => (
               <CharacterOption
                 key={c.id}
                 c={c}
-                active={c.id === selectedAiId}
-                onClick={() => setSelectedAiId(c.id)}
+                active={c.id === selectedSystemId}
+                onClick={() => setSelectedSystemId(c.id)}
+                disabled={c.id === selectedUserSystemId}
               />
             ))}
           </div>
@@ -124,39 +104,31 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
 
         <div className={s.pane}>
           <h3 className={s.h3}>
-            我的人设
-            <span className={s.h3Hint}>可选 · 注入 user_system</span>
+            我是谁
+            <span className={s.h3Hint}>可选 · 作为 user_system</span>
           </h3>
-          {userCharacters.length === 0 ? (
-            <div className={s.emptyUser}>
-              <p>还没有"我的人设"。</p>
-              <p className={s.emptyHint}>
-                在人物页新建角色时，类型选「我的人设」，就可以在对话里扮演一个具体身份。
-              </p>
-            </div>
-          ) : (
-            <div className={s.charList}>
-              <button
-                type="button"
-                onClick={() => setSelectedUserId(null)}
-                className={[s.char, s.charSkip, selectedUserId === null ? s.charActive : ''].join(' ')}
-              >
-                <X size={16} />
-                <div className={s.charText}>
-                  <div className={s.charName}>不指定</div>
-                  <div className={s.charPreview}>直接以"我"的身份说话</div>
-                </div>
-              </button>
-              {userCharacters.map((c) => (
-                <CharacterOption
-                  key={c.id}
-                  c={c}
-                  active={c.id === selectedUserId}
-                  onClick={() => setSelectedUserId(c.id)}
-                />
-              ))}
-            </div>
-          )}
+          <div className={s.charList}>
+            <button
+              type="button"
+              onClick={() => setSelectedUserSystemId(null)}
+              className={[s.char, s.charSkip, selectedUserSystemId === null ? s.charActive : ''].join(' ')}
+            >
+              <X size={16} />
+              <div className={s.charText}>
+                <div className={s.charName}>不指定</div>
+                <div className={s.charPreview}>直接以"我"的身份说话</div>
+              </div>
+            </button>
+            {characters.map((c) => (
+              <CharacterOption
+                key={c.id}
+                c={c}
+                active={c.id === selectedUserSystemId}
+                onClick={() => setSelectedUserSystemId(c.id)}
+                disabled={c.id === selectedSystemId}
+              />
+            ))}
+          </div>
         </div>
       </div>
 
@@ -196,25 +168,27 @@ function CharacterOption({
   c,
   active,
   onClick,
+  disabled,
 }: {
   c: Character
   active: boolean
   onClick: () => void
+  disabled?: boolean
 }) {
   return (
     <button
       type="button"
       onClick={onClick}
-      className={[s.char, active ? s.charActive : ''].join(' ')}
+      disabled={disabled}
+      className={[
+        s.char,
+        active ? s.charActive : '',
+        disabled ? s.charDisabled : '',
+      ].join(' ')}
     >
       <Avatar name={c.name} avatar={c.avatar} size={40} />
       <div className={s.charText}>
-        <div className={s.charName}>
-          {c.name}
-          <span className={s.charRoleTag}>
-            {c.role === 'user' ? '我' : 'AI'}
-          </span>
-        </div>
+        <div className={s.charName}>{c.name}</div>
         <div className={s.charPreview}>
           {c.systemPrompt.slice(0, 40) || c.greeting || '（未填写）'}
         </div>

@@ -8,7 +8,7 @@ import Avatar from '../components/Avatar'
 import { useStore } from '../store/StoreContext'
 import { chatOnce } from '../api/minimax'
 import { uid } from '../store/storage'
-import type { Character, CharacterRole, Sample } from '../store/types'
+import type { Character, Sample } from '../store/types'
 import s from './CharacterEditor.module.css'
 
 interface Props {
@@ -204,7 +204,6 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
   )
   const [greeting, setGreeting] = useState(character?.greeting ?? '')
   const [tagsText, setTagsText] = useState((character?.tags ?? []).join('、'))
-  const [role, setRole] = useState<CharacterRole>(character?.role ?? 'character')
 
   const [genDirection, setGenDirection] = useState('')
   const [generating, setGenerating] = useState(false)
@@ -290,11 +289,9 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
       name: name.trim(),
       avatar: avatar.trim(),
       systemPrompt: systemPrompt.trim(),
-      // user 类型不需要 samples 和 greeting
-      samples: role === 'user' ? [] : cleanSamples,
-      greeting: role === 'user' ? '' : greeting.trim(),
+      samples: cleanSamples,
+      greeting: greeting.trim(),
       tags,
-      role,
       createdAt: character?.createdAt ?? Date.now(),
       updatedAt: Date.now(),
     }
@@ -355,30 +352,25 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
         </div>
       </div>
 
-      <div className={s.roleBox}>
-        <label className={s.roleLabel}>类型</label>
-        <div className={s.roleSegment}>
-          <button
-            type="button"
-            className={[s.roleSeg, role === 'character' ? s.roleSegActive : ''].join(' ')}
-            onClick={() => setRole('character')}
-          >
-            <span className={s.roleSegTitle}>AI 角色</span>
-            <span className={s.roleSegDesc}>
-              由模型扮演。对话时作为 system + few-shot 范例
-            </span>
-          </button>
-          <button
-            type="button"
-            className={[s.roleSeg, role === 'user' ? s.roleSegActive : ''].join(' ')}
-            onClick={() => setRole('user')}
-          >
-            <span className={s.roleSegTitle}>我的人设</span>
-            <span className={s.roleSegDesc}>
-              代表你自己。对话时作为 user_system 注入
-            </span>
-          </button>
+      <div className={s.aiGenBox}>
+        <div className={s.aiGenHead}>
+          <Sparkles size={16} />
+          <span>AI 一键生成（system prompt + 3 条示例 + 开场白）</span>
         </div>
+        <Input
+          value={genDirection}
+          onChange={(e) => setGenDirection(e.target.value)}
+          placeholder="例：清冷古风剑客，背负家仇"
+          hint={`留空将让模型自由发挥。已有 system prompt 时会作为参考生成变体。生成语言：${lang === 'zh' ? '中文' : '英文'}。`}
+        />
+        <Button
+          variant="primary"
+          onClick={aiGenerateAll}
+          loading={generating}
+          icon={<Sparkles size={14} />}
+        >
+          一键生成
+        </Button>
       </div>
 
       <div className={s.section}>
@@ -482,29 +474,6 @@ export default function CharacterEditor({ character, onClose, onSave }: Props) {
           placeholder="新对话开始时，角色主动说的第一句话"
           showCount
         />
-      </div>
-
-      <div className={s.aiGenBox}>
-        <div className={s.aiGenHead}>
-          <Sparkles size={16} />
-          <span>
-            AI 一键生成（同时生成 system prompt + 3 条示例 + 开场白）
-          </span>
-        </div>
-        <Input
-          value={genDirection}
-          onChange={(e) => setGenDirection(e.target.value)}
-          placeholder="例：清冷古风剑客，背负家仇"
-          hint={`留空将让模型自由发挥。已有 system prompt 时会作为参考生成变体。当前生成语言：${lang === 'zh' ? '中文' : '英文'}。`}
-        />
-        <Button
-          variant="primary"
-          onClick={aiGenerateAll}
-          loading={generating}
-          icon={<Sparkles size={14} />}
-        >
-          一键生成
-        </Button>
       </div>
 
       {aiError ? <div className={s.error}>{aiError}</div> : null}

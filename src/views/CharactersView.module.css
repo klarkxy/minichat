@@ -48,37 +48,6 @@
     transform var(--duration-fast) var(--ease);
 }
 
-.cardUser {
-  background: linear-gradient(135deg, #f7faff 0%, #ffffff 100%);
-  border-color: #d8e2f4;
-}
-
-.cardNameRow {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-}
-
-.roleTag {
-  display: inline-flex;
-  align-items: center;
-  font-size: var(--text-xs);
-  font-weight: 600;
-  padding: 1px 7px;
-  border-radius: var(--radius-pill);
-  flex-shrink: 0;
-  line-height: 1.4;
-}
-
-.roleTagAi {
-  background: var(--color-accent-soft);
-  color: #186a3a;
-}
-
-.roleTagUser {
-  background: #e8efff;
-  color: #2c4a8a;
-}
 .card:hover {
   border-color: var(--color-border-strong);
   box-shadow: var(--shadow-sm);

@@ -48,15 +48,12 @@ export function saveSettings(s: Settings): void {
 
 // characters: 迁移老数据
 function migrateCharacter(raw: Character): Character {
-  // 兼容老字段：如果只有 greeting 没有 samples，留空数组
-  const legacy = raw as Character & { samples?: Sample[]; role?: string }
+  // 兼容老字段：role 字段已废弃，直接丢弃
+  const legacy = raw as Character & { samples?: Sample[]; role?: unknown }
   const samples = Array.isArray(legacy.samples) ? legacy.samples : []
-  return {
-    ...raw,
-    samples,
-    // 老数据默认是 AI 角色
-    role: legacy.role === 'user' ? 'user' : 'character',
-  }
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const { role: _dropped, ...rest } = legacy
+  return { ...rest, samples }
 }
 
 // characters
