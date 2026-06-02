@@ -240,7 +240,7 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
 
   const canSend = !!character && !streaming && draft.trim().length > 0
 
-  const runStream = async (text: string, aiMsgId: string) => {
+  const runStream = async (text: string, aiMsgId: string, userMsgId?: string) => {
     accumRef.current[aiMsgId] = ''
     stickBottomRef.current = true
 
@@ -282,6 +282,16 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
         content: accumRef.current[aiMsgId] ?? '',
         patch: { streaming: false },
       })
+      // 成功时清除 user 消息的 error 标记
+      if (userMsgId) {
+        dispatch({
+          type: 'update-message',
+          chatId: chat.id,
+          messageId: userMsgId,
+          content: text,
+          patch: { error: false },
+        })
+      }
     } catch (e) {
       if ((e as Error)?.name === 'AbortError') {
         dispatch({
@@ -301,6 +311,16 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
           content: accumRef.current[aiMsgId] ?? '',
           patch: { streaming: false, error: true },
         })
+        // 同步标记 user 消息为 error（避免 retry 时重复 append）
+        if (userMsgId) {
+          dispatch({
+            type: 'update-message',
+            chatId: chat.id,
+            messageId: userMsgId,
+            content: text,
+            patch: { error: true },
+          })
+        }
       }
     } finally {
       setStreaming(false)
@@ -334,7 +354,7 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
       },
     })
 
-    await runStream(text, aiMsgId)
+    await runStream(text, aiMsgId, userMsg.id)
   }
 
   const stop = () => {
@@ -355,23 +375,8 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
         messages: chat.messages.filter((m) => m.id !== msg.id),
       },
     })
-    // schedule stream for the same user content
-    setTimeout(() => {
-      sendWithMessage(userMsg.content)
-    }, 0)
-  }
-
-  const sendWithMessage = (text: string) => {
-    if (!text.trim() || !character) return
-    setSendError(null)
-    const userMsg: ChatMessage = {
-      id: uid(),
-      role: 'user',
-      content: text,
-      timestamp: Date.now(),
-    }
+    // create a new assistant message and reuse the existing user message
     const aiMsgId = uid()
-    dispatch({ type: 'append-message', chatId: chat.id, message: userMsg })
     dispatch({
       type: 'append-message',
       chatId: chat.id,
@@ -383,7 +388,7 @@ function ChatDetail({ chat, showParams, setShowParams, onBack }: DetailProps) {
         streaming: true,
       },
     })
-    return runStream(text, aiMsgId)
+    setTimeout(() => runStream(userMsg.content, aiMsgId, userMsg.id), 0)
   }
 
   const deleteChat = () => {
@@ -563,6 +568,7 @@ function MessageItem({
         s.msgRow,
         isUser ? s.msgRowUser : s.msgRowAssistant,
         message.error ? s.msgError : '',
+        message.error && isUser ? s.msgErrorUser : '',
       ].join(' ')}
     >
       {!isUser ? (
@@ -579,11 +585,16 @@ function MessageItem({
         </div>
         <div className={s.metaRow}>
           <span className={s.metaTime}>{fmtTime(message.timestamp)}</span>
-          {message.error ? (
+          {message.error && !isUser ? (
             <button className={s.metaAction} onClick={() => onRetry(message)}>
               <RefreshCw size={11} />
               重试
             </button>
+          ) : null}
+          {message.error && isUser ? (
+            <span className={s.metaAction} title="这条消息送达失败，但内容已保留。重试时只需点击下方 AI 消息的「重试」按钮即可重新发送。">
+              · 发送失败
+            </span>
           ) : null}
         </div>
       </div>

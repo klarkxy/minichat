@@ -280,6 +280,11 @@
   border-color: var(--color-danger);
 }
 
+.msgErrorUser .bubble {
+  background: var(--color-danger-soft);
+  border-color: #f4c8c5;
+}
+
 .bubbleWrap {
   display: flex;
   flex-direction: column;
