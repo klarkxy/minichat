@@ -1,38 +1,29 @@
 import { useState } from 'react'
-import { useNavigate } from 'react-router-dom'
 import { Plus, Pencil, Trash2, MessageCircle, UserRound, Sparkles } from 'lucide-react'
 import Avatar from '../components/Avatar'
 import Button from '../components/Button'
 import Modal from '../components/Modal'
 import EmptyState from '../components/EmptyState'
 import CharacterEditor from './CharacterEditor'
+import NewChatDialog from './NewChatDialog'
 import { useStore } from '../store/StoreContext'
-import { uid } from '../store/storage'
 import type { Character } from '../store/types'
 import s from './CharactersView.module.css'
 
 export default function CharactersView() {
   const { state, dispatch } = useStore()
-  const nav = useNavigate()
   const [editing, setEditing] = useState<Character | null>(null)
   const [creating, setCreating] = useState(false)
   const [confirmDelete, setConfirmDelete] = useState<Character | null>(null)
+  // 卡片「开始对话」时记录预选的 system 角色 id；null 表示不带预选
+  const [quickChatId, setQuickChatId] = useState<string | null>(null)
+  const [newOpen, setNewOpen] = useState(false)
 
   const characters = state.characters
 
   const startChat = (char: Character) => {
-    const newChat = {
-      id: uid(),
-      characterId: char.id,
-      title: `与 ${char.name} 的对话`,
-      scenario: '',
-      temperature: state.settings.temperature,
-      messages: [],
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
-    }
-    dispatch({ type: 'add-chat', payload: newChat })
-    nav('/chat/' + newChat.id)
+    setQuickChatId(char.id)
+    setNewOpen(true)
   }
 
   const remove = (char: Character) => {
@@ -170,6 +161,16 @@ export default function CharactersView() {
         <Sparkles size={14} />
         <span>提示：在编辑弹窗里可以用 AI 一键生成人设和示例对话。</span>
       </div>
+
+      <NewChatDialog
+        key={quickChatId ?? 'new'}
+        open={newOpen}
+        onClose={() => {
+          setNewOpen(false)
+          setQuickChatId(null)
+        }}
+        defaultCharacterId={quickChatId ?? undefined}
+      />
     </div>
   )
 }
