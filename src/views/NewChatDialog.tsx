@@ -85,10 +85,7 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
     >
       <div className={s.dualPane}>
         <div className={s.pane}>
-          <h3 className={s.h3}>
-            和 ta 聊
-            <span className={s.h3Hint}>必选 · 作为 system</span>
-          </h3>
+          <h3 className={s.h3}>和 ta 聊</h3>
           <div className={s.charList}>
             {characters.map((c) => (
               <CharacterOption
@@ -103,10 +100,7 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
         </div>
 
         <div className={s.pane}>
-          <h3 className={s.h3}>
-            我是谁
-            <span className={s.h3Hint}>可选 · 作为 user_system</span>
-          </h3>
+          <h3 className={s.h3}>我是谁</h3>
           <div className={s.charList}>
             <button
               type="button"
@@ -116,7 +110,6 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
               <X size={16} />
               <div className={s.charText}>
                 <div className={s.charName}>不指定</div>
-                <div className={s.charPreview}>直接以"我"的身份说话</div>
               </div>
             </button>
             {characters.map((c) => (
@@ -133,10 +126,7 @@ export default function NewChatDialog({ open, onClose, defaultCharacterId }: Pro
       </div>
 
       <div className={s.section}>
-        <h3 className={s.h3}>
-          场景设定（可选）
-          <span className={s.h3Hint}>注入到 group · 影响情境理解</span>
-        </h3>
+        <h3 className={s.h3}>场景（可选）</h3>
         <Textarea
           value={scenario}
           onChange={(e) => setScenario(e.target.value)}
@@ -186,13 +176,8 @@ function CharacterOption({
         disabled ? s.charDisabled : '',
       ].join(' ')}
     >
-      <Avatar name={c.name} avatar={c.avatar} size={40} />
-      <div className={s.charText}>
-        <div className={s.charName}>{c.name}</div>
-        <div className={s.charPreview}>
-          {c.systemPrompt.slice(0, 40) || c.greeting || '（未填写）'}
-        </div>
-      </div>
+      <Avatar name={c.name} avatar={c.avatar} size={36} />
+      <div className={s.charName}>{c.name}</div>
     </button>
   )
 }
